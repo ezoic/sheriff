@@ -84,12 +84,6 @@ func Marshal(options *Options, data interface{}) (interface{}, error) {
 		// we want the childs exposed at the toplevel to be
 		// consistent with the embedded json marshaller
 		if val.Kind() == reflect.Ptr {
-			if val.IsNil() { // For pointer fields with nil value, and omitempty not set, we set to nil (null) in JSON
-				if !jsonOpts.Contains("omitempty") {
-					dest[jsonTag] = nil
-				}
-				continue
-			}
 			val = val.Elem()
 		}
 
@@ -150,6 +144,10 @@ func Marshal(options *Options, data interface{}) (interface{}, error) {
 //
 // There is support for types implementing the Marshaller interface, arbitrary structs, slices, maps and base types.
 func marshalValue(options *Options, v reflect.Value) (interface{}, error) {
+	// return nil on nil pointer struct fields
+	if !v.IsValid() || !v.CanInterface() {
+		return nil, nil
+	}
 	val := v.Interface()
 
 	if marshaller, ok := val.(Marshaller); ok {
